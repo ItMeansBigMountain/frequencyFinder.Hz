@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -11,7 +10,6 @@
       text-align: center;
       margin: 0;
       padding: 0;
-      transition: background 0.3s;
     }
     #hz {
       font-size: 2rem;
@@ -34,6 +32,20 @@
       border: none;
       border-radius: 5px;
     }
+    table {
+      width: 100%;
+      max-width: 800px;
+      margin: 2rem auto;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 0.5rem;
+      border: 1px solid #0f0;
+    }
+    th {
+      background-color: #111;
+    }
   </style>
 </head>
 <body>
@@ -44,6 +56,17 @@
   <canvas id="waveform" height="150"></canvas>
   <canvas id="spectrum" height="150"></canvas>
 
+  <table>
+    <thead>
+      <tr>
+        <th>Range (Hz)</th>
+        <th>Name</th>
+        <th>Effect</th>
+      </tr>
+    </thead>
+    <tbody id="freqTable"></tbody>
+  </table>
+
   <script>
     const hzDisplay = document.getElementById("hz");
     const matchDisplay = document.getElementById("match");
@@ -51,33 +74,44 @@
     const spectrumCanvas = document.getElementById("spectrum");
     const waveformCtx = waveformCanvas.getContext("2d");
     const spectrumCtx = spectrumCanvas.getContext("2d");
+    const freqTable = document.getElementById("freqTable");
 
     waveformCanvas.width = spectrumCanvas.width = window.innerWidth;
 
     const healingFrequencies = [
-      { hz: 40,    label: "Gamma Boost",      effect: "Cognition",              color: "#999999" },
-      { hz: 174,   label: "Pain Relief",      effect: "Grounding",              color: "#8B0000" },
-      { hz: 285,   label: "Cell Repair",      effect: "Tissue Healing",         color: "#B22222" },
-      { hz: 396,   label: "Liberation",       effect: "Release Fear",           color: "#FF0000" },
-      { hz: 417,   label: "Undoing Trauma",   effect: "Clearing Negativity",    color: "#FF7F00" },
-      { hz: 432,   label: "Earth Tuning",     effect: "Balance & Calm",         color: "#FFD700" },
-      { hz: 440,   label: "Modern Pitch",     effect: "Tension?",               color: "#AAAAAA" },
-      { hz: 528,   label: "Love Frequency",   effect: "DNA Repair",             color: "#00FF00" },
-      { hz: 639,   label: "Connection",       effect: "Relationships",          color: "#00CED1" },
-      { hz: 741,   label: "Detox",            effect: "Purification",           color: "#1E90FF" },
-      { hz: 852,   label: "Intuition",        effect: "Inner Wisdom",           color: "#6A5ACD" },
-      { hz: 963,   label: "God Frequency",    effect: "Pineal Activation",      color: "#9400D3" }
+      { min: 35,  max: 45,  label: "Gamma Boost",      effect: "Cognition",              color: "#999999" },
+      { min: 170, max: 178, label: "Pain Relief",      effect: "Grounding",              color: "#8B0000" },
+      { min: 280, max: 290, label: "Cell Repair",      effect: "Tissue Healing",         color: "#B22222" },
+      { min: 390, max: 400, label: "Liberation",       effect: "Release Fear",           color: "#FF0000" },
+      { min: 412, max: 422, label: "Undoing Trauma",   effect: "Clearing Negativity",    color: "#FF7F00" },
+      { min: 428, max: 436, label: "Earth Tuning",     effect: "Balance & Calm",         color: "#FFD700" },
+      { min: 437, max: 443, label: "Modern Pitch",     effect: "Tension?",               color: "#AAAAAA" },
+      { min: 520, max: 535, label: "Love Frequency",   effect: "DNA Repair",             color: "#00FF00" },
+      { min: 630, max: 645, label: "Connection",       effect: "Relationships",          color: "#00CED1" },
+      { min: 735, max: 750, label: "Detox",            effect: "Purification",           color: "#1E90FF" },
+      { min: 845, max: 860, label: "Intuition",        effect: "Inner Wisdom",           color: "#6A5ACD" },
+      { min: 955, max: 970, label: "God Frequency",    effect: "Pineal Activation",      color: "#9400D3" }
     ];
 
     function findMatch(hz) {
-      const tolerance = 3;
-      for (let f of healingFrequencies) {
-        if (Math.abs(f.hz - hz) < tolerance) return f;
-      }
-      return null;
+      return healingFrequencies.find(f => hz >= f.min && hz <= f.max) || null;
+    }
+
+    function renderTable() {
+      freqTable.innerHTML = '';
+      healingFrequencies.forEach(f => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${f.min}–${f.max}</td>
+          <td style="color: ${f.color}">${f.label}</td>
+          <td>${f.effect}</td>
+        `;
+        freqTable.appendChild(row);
+      });
     }
 
     async function start() {
+      renderTable();
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const analyser = audioCtx.createAnalyser();
@@ -101,6 +135,7 @@
             index = i;
           }
         }
+
         const dominantHz = index * sampleRate / analyser.fftSize;
         hzDisplay.textContent = `${dominantHz.toFixed(1)} Hz`;
 
@@ -108,13 +143,12 @@
         if (match) {
           matchDisplay.textContent = `${match.label} – ${match.effect}`;
           matchDisplay.style.color = match.color;
-          document.body.style.backgroundColor = match.color + "11";
         } else {
           matchDisplay.textContent = "--";
           matchDisplay.style.color = "#0ff";
-          document.body.style.backgroundColor = "#000";
         }
 
+        // Spectrum
         spectrumCtx.clearRect(0, 0, spectrumCanvas.width, spectrumCanvas.height);
         const barWidth = spectrumCanvas.width / freqData.length;
         for (let i = 0; i < freqData.length; i++) {
@@ -123,6 +157,7 @@
           spectrumCtx.fillRect(i * barWidth, spectrumCanvas.height - val, barWidth, val);
         }
 
+        // Waveform
         waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height);
         waveformCtx.beginPath();
         waveformCtx.lineWidth = 2;
