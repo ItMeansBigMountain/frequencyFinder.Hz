@@ -1,0 +1,53 @@
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Python package manager stuff
+poetry.lock
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# OS and IDE files
+.DS_Store
+.vscode/
+.idea/
+*.code-workspace
+*.suo
+*.user
+*.sln
+
+# Git
+.git/
+.gitignore
+
+# Terraform (if in the same repo)
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Replit
+.replit
+
+# Ignore local secrets
+.env
+.env.*
+
+# Ignore Dockerfiles you don’t want (optional)
+docker-compose.override.yml
